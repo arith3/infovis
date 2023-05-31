@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <!-- <script src="https://unpkg.com/@popperjs/core@2"></script> -->
+    <script src="https://unpkg.com/@popperjs/core@2.11.5/dist/umd/popper.min.js"></script>
+
+
+    <script src="components/scatterplot.js"></script>
+    <script src="components/histogram.js"></script>
+    <script src="components/pc.js"></script>
+    <script src="components/datatable.js"></script>
+    <!-- Load Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script src="https://unpkg.com/simple-statistics@7.1.0/dist/simple-statistics.min.js"></script>
+
+
+    <title>HyunjunKim-InfoVis</title>
+    <style>
+        body {
+            background: #eee;
+            overflow-y: scroll;
+        }
+
+        .container {
+            width: 1280px;
+            background: white;
+        }
+
+        .brushed {
+            stroke-width: 1;
+            stroke: gray;
+            r: 5;
+        }
+        .mapbrushed {
+            stroke-width: 1.5;
+            stroke: maroon;
+        }
+        #map {
+            display: inline-flex;
+            position: relative;
+            vertical-align: top;
+            width: 600px;
+            height: 600px;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #interactiverow {
+            margin-bottom: 1em;
+        }
+        #data-header { background-color: mediumaquamarine; }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container navbar navbar-light bg-light">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">California Housing Dataset Visualization</span>
+            </div>
+        </nav>
+
+    </header>
+
+
+    <main class="container pb-3">
+        <div class="row pt-2">
+            <div class="col-1 text-end pe-2"><strong>Value X:</strong></div>
+            <div class="col-11">
+                <!-- <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="ID" id="x-id" checked>
+                    <label class="form-check-label" for="x-id">ID</label>
+                </div> -->
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="MedInc" id="x-mi" checked>
+                    <label class="form-check-label" for="x-mi">Income</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="HouseAge" id="x-ha">
+                    <label class="form-check-label" for="x-ha">House Age</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="AveRooms" id="x-ar">
+                    <label class="form-check-label" for="x-ar">Num of Rooms</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="AveBedrms" id="x-ab">
+                    <label class="form-check-label" for="x-ab">Num of Bedrms</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="Population" id="x-pp">
+                    <label class="form-check-label" for="x-pp">Population</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="AveOccup" id="x-ao">
+                    <label class="form-check-label" for="x-ao">Num of Family</label>
+                </div>
+                <!-- <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="Latitude" id="x-la">
+                    <label class="form-check-label" for="x-la">Latitude</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="Longitude" id="x-lo">
+                    <label class="form-check-label" for="x-lo">Longitude</label>
+                </div> -->
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="x-encoding" value="MedHouseVal" id="x-mh">
+                    <label class="form-check-label" for="x-mh">House Value</label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col offset-1">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="use-color">
+                    <label class="form-check-label" for="use-color">Scatterplot Visualize? (Correlation Analysis)</label>
+                </div>
+            </div>
+        </div>
+        <div id="interactiverow" class="row" style="visibility:hidden">
+            <div class="col-1 text-end pe-2"><strong>Value Y:</strong></div>
+            <div class="col-11">
+                <!-- <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="ID" id="y-id" checked>
+                    <label class="form-check-label" for="y-id">ID</label>
+                </div> -->
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="MedInc" id="y-mi" checked>
+                    <label class="form-check-label" for="y-mi">Income</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="HouseAge" id="y-ha">
+                    <label class="form-check-label" for="y-ha">House Age</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="AveRooms" id="y-ar">
+                    <label class="form-check-label" for="y-ar">Num of Rooms</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="AveBedrms" id="y-ab">
+                    <label class="form-check-label" for="y-ab">Num of Bedrms</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="Population" id="y-pp">
+                    <label class="form-check-label" for="y-pp">Population</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="AveOccup" id="y-ao">
+                    <label class="form-check-label" for="y-ao">Num of Family</label>
+                </div>
+                <!-- <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="Latitude" id="y-la">
+                    <label class="form-check-label" for="y-la">Latitude</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="Longitude" id="y-lo">
+                    <label class="form-check-label" for="y-lo">Longitude</label>
+                </div> -->
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="y-encoding" value="MedHouseVal" id="y-mh">
+                    <label class="form-check-label" for="y-mh">House Value</label>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="text-center">
+            <div id="map"></div>
+            <div class="tooltip bs-tooltip-top show" id="map-tooltip" role="tooltip" style="display:none">
+                <div class="tooltip-arrow"></div>
+                <div class="tooltip-inner">
+                    Some tooltip text!
+                </div>
+            </div>
+            <!-- <svg width="600" height="600" id="map"></svg> -->
+            <svg width="600" height="600" id="scatterplot">
+            </svg>
+            <div class="tooltip bs-tooltip-top show" id="sc-tooltip" role="tooltip" style="display:none">
+                <div class="tooltip-arrow"></div>
+                <div class="tooltip-inner">
+                    Some tooltip text!
+                </div>
+            </div>
+            
+
+            <svg width="600" height="600" id="histogram">
+            </svg>
+        </div>
+
+        <!-- <div class="text-center">
+            <svg id="pc">
+            </svg>
+        </div> -->
+
+        <table id="text-table" class="table table-striped text-center">
+            <thead id = "data-header">
+                <tr>
+                    <th>ID <span>▲</span></th>
+                    <th>Income</th>
+                    <th>House Age</th>
+                    <th>Rooms</th>
+                    <th>Bedrms</th>
+                    <th>Population</th>
+                    <th>Family</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>House Value</th>
+                </tr>
+            </thead>
+            <tbody id="data-table">
+
+            </tbody>
+        </table>
+        <!-- <table id="text-table" class="table table-striped text-center">
+            <thead id="data-header">
+              <tr>
+                <th data-column="ID">ID <span class="sort-arrow"></span></th>
+                <th data-column="Income">Income <span class="sort-arrow"></span></th>
+                <th data-column="House Age">House Age <span class="sort-arrow"></span></th>
+                <th data-column="Rooms">Rooms <span class="sort-arrow"></span></th>
+                <th data-column="Bedrms">Bedrms <span class="sort-arrow"></span></th>
+                <th data-column="Population">Population <span class="sort-arrow"></span></th>
+                <th data-column="Family">Family <span class="sort-arrow"></span></th>
+                <th data-column="Latitude">Latitude <span class="sort-arrow"></span></th>
+                <th data-column="Longitude">Longitude <span class="sort-arrow"></span></th>
+                <th data-column="House Value">House Value <span class="sort-arrow"></span></th>
+              </tr>
+            </thead>
+            <tbody id="data-table"></tbody>
+          </table> -->
+
+    </main>
+
+    <script>
+        let data, brushedData, scatterplot, histogram, pc, dataTable;
+
+        function updateScatterplot() {
+            let xVar = d3.select("input[type=radio][name=x-encoding]:checked").property("value");
+            let yVar = d3.select("input[type=radio][name=y-encoding]:checked").property("value");
+            let useColor = d3.select("#use-color").property("checked");
+            scatterplot.update(brushedData && brushedData.length > 0 ? brushedData : data, xVar, yVar, xVar, useColor);
+        }
+
+        function updateHistogram() {
+            let xVar = d3.select("input[type=radio][name=x-encoding]:checked").property("value");
+            histogram.update(brushedData && brushedData.length > 0 ? brushedData : data, xVar);
+            //histogram.update(brushedData && brushedData.length > 0 ? brushedData : data, makeBin("AveRooms"));
+        }
+
+        function updatePC() {
+            pc.update(brushedData && brushedData.length > 0 ? brushedData : data, "AveRooms");
+        }
+
+        function updateDataTable() {
+            dataTable.update(brushedData && brushedData.length > 0 ? brushedData : data, data.columns)
+        }
+
+        function updateMap() {
+            // map
+            let xVar = d3.select("input[type=radio][name=x-encoding]:checked").property("value");
+            //console.log(xVar, 'updateMap')
+            //const priceExtent = d3.extent(data, d => d.MedHouseVal);
+            let priceExtent = d3.extent(data, (d) => {return d[xVar]});
+            let radiusScale = d3.scaleSqrt().domain(priceExtent).range([4, 20]);
+            let circleColor = d3.scaleSequential().domain(priceExtent).interpolator(d3.interpolateViridis);
+            let maptooltip = d3.select("#map-tooltip");
+            //console.log(priceExtent)
+            /*mapg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).x)
+                .attr("cy", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).y)
+                .attr("r", d => radiusScale(d[xVar]))
+                .attr("fill", d => circleColor(d[xVar]))
+                .attr("opacity", 0.7)
+                .append("title")
+                .text(d => `주택 가격: $${d.Latitude}`);*/
+            mapg.selectAll("circle")
+                .data(data)
+                .join("circle")
+                .attr("cx", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).x)
+                .attr("cy", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).y)
+                .attr("r", d => radiusScale(d[xVar]))
+                .attr("fill", d => circleColor(d[xVar]))
+                .attr("opacity", 0.7)
+                //.attr("stroke", "gray")
+                .on("mouseover", (e, d) => {
+                    maptooltip.select(".tooltip-inner")
+                        .html(`${xVar}: ${d[xVar]}<br />Lat: ${d.Latitude}<br />Lon: ${d.Longitude}`);
+    
+                    Popper.createPopper(e.target, maptooltip.node(), {
+                        placement: 'top',
+                        modifiers: [
+                            {
+                                name: 'arrow',
+                                options: {
+                                    element: maptooltip.select(".tooltip-arrow").node(),
+                                },
+                            },
+                        ],
+                    });
+    
+                    maptooltip.style("display", "block");
+                })
+                .on("mouseout", (d) => {
+                    maptooltip.style("display", "none");
+                })
+                ;
+            mapleg
+                .attr("transform", "translate(0, 50)")
+                .call(d3.legendColor().cells(6).shapeWidth(30).scale(circleColor));
+        }
+        function mapBrushed(selection) {
+            if (selection) {
+                // 선택 영역에 해당하는 데이터 필터링 등 추가 작업 수행
+                const selectedData = data.filter(function (d) {
+                    const point = map.latLngToLayerPoint([d.Latitude, d.Longitude]);
+                    return point.x >= selection[0][0] && point.x <= selection[1][0] && point.y >= selection[0][1] && point.y <= selection[1][1];
+                });
+                //console.log(selectedData);
+                d3.select("#map").selectAll("circle").attr("class", d => selectedData.includes(d) ? "mapbrushed" : "");
+                return selectedData;
+            } else {
+                d3.select("#map").selectAll("circle").attr("class", "");
+            }
+        }
+
+        /*
+        var svg = d3.select("#map").append("svg")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .call(d3.zoom().on("zoom", function () {
+                svg.selectAll('path')
+                    .attr("transform", d3.event.transform);
+            }));
+        var projection = d3.geoAlbers()
+            .center([0, 36.5])
+            .rotate([120, 0])
+            .parallels([32, 40])
+            .scale(2500)
+            .translate([400, 300]);
+        var path = d3.geoPath().projection(projection);
+        var g = svg.append("g");
+        d3.csv("https://raw.githubusercontent.com/arith3/infovis/main/california_housing.csv").then(data => {
+            const priceExtent = d3.extent(data, d => +d.MedHouseVal);
+            const radiusScale = d3.scaleSqrt()
+                .domain(priceExtent)
+                .range([2, 20]);
+            d3.json("https://raw.githubusercontent.com/arith3/infovis/main/california-map.json").then(json => {
+                svg.selectAll("path")
+                    .data(json.features)
+                    .enter()
+                    .append("path")
+                    .attr("d", path)
+                    .attr("stroke", "#333")
+                    .attr("fill", "none");
+                svg.selectAll("circle")
+                    .data(data)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => projection([+d.Longitude, +d.Latitude])[0])
+                    .attr("cy", d => projection([+d.Longitude, +d.Latitude])[1])
+                    .attr("r", d => radiusScale(+d.MedHouseVal))
+                    .attr("fill", "steelblue")
+                    .attr("opacity", 0.7)
+                    .append("title")
+                    .text(d => `주택 가격: $${d.MedHouseVal}`);
+            });
+        });
+        var zoom = d3.zoom()
+            .scaleExtent([1, 8])
+            .on('zoom', function (event) {
+                g.selectAll('path')
+                    .attr('transform', event.transform);
+            });
+        svg.call(zoom);
+        */
+
+        let map = L.map('map', {doubleClickZoom: false, boxZoom: false})
+                    .setView([37, -120], 6)   // center position + zoom
+                    .setMaxBounds([[32, -114], [42.5, -125]]);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '',
+                        maxZoom: 14,
+                        minZoom: 6,
+                    }).addTo(map);
+        d3.json('https://raw.githubusercontent.com/arith3/infovis/main/california-map-hole.json').then(data => {
+            L.geoJSON(data, {style: {
+                "color": "#000000",
+                "weight": "0.5",
+                "fill": true,
+                "fillColor": "#000000",
+                "fillOpacity": 0.5
+            }}).addTo(map);
+        });
+        const legendContainer = L.control({ position: 'bottomleft' });
+        legendContainer.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'legend');
+            return div;
+        };
+        legendContainer.addTo(map);
+        L.svg().addTo(map);
+        let mapsvg = d3.select("#map").select("svg");
+        let mapg = mapsvg.append("g");
+        let mapleg = d3.select(".legend").append("svg").append("g");
+        //let mapbrush = mapsvg.append('g').attr("class", "brush").call(d3.brush().extent([[0, 0], [map.getSize().x, map.getSize().y]]).filter(event => {event.ctrlKey; console.log(event.ctrlKey)}));
+        let shiftPressed = false;
+        const mapbrush = d3.brush()
+                        //.extent([[0, 0], [map.getSize().x, map.getSize().y]])
+                        .filter(event => !event.metaKey
+                            && !event.button
+                            && (event.ctrlKey
+                            || event.target.__data__.type !== "overlay"));
+        //mapbrush.selectAll(".handle").remove();
+        mapsvg.append('g').attr("class", "brush").call(mapbrush).call(g => g.select(".overlay").style("cursor", "default"));
+        /*d3.csv("https://raw.githubusercontent.com/arith3/infovis/main/california_housing.csv").then(data => {
+            console.log(d3.select("input[type=radio][name=x-encoding]:checked").property("value"))
+            console.log(data[d3.select("input[type=radio][name=x-encoding]:checked").property("value")])
+            const priceExtent = d3.extent(data, d => +d.MedHouseVal);
+            const radiusScale = d3.scaleSqrt().domain(priceExtent).range([2, 20]);
+            const circleColor = d3.scaleSequential().domain(priceExtent).interpolator(d3.interpolateViridis);
+
+            gg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).x)
+                .attr("cy", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).y)
+                .attr("r", d => radiusScale(+d.MedHouseVal))
+                .attr("fill", d => circleColor(+d.MedHouseVal))
+                .attr("opacity", 0.7)
+                .append("title")
+                .text(d => `주택 가격: $${d.MedHouseVal}`);
+
+        });*/
+        // Function that update circle position if something change
+        function updateMapPos() {
+            d3.select("#map").selectAll("circle")
+                .attr("cx", d => map.latLngToLayerPoint([d.Latitude, d.Longitude]).x)
+                .attr("cy", d => map.latLngToLayerPoint([d.Latitude, d.Longitude]).y)
+                //.attr("class", "")
+        }
+
+        // If the user change the map (zoom or drag), I update circle position:
+        map.on("moveend", updateMapPos)
+        map.on('dblclick', function(ev) {
+            alert(ev.latlng); // ev is an event object (MouseEvent in this case)
+        });
+        /*
+        map.on('keypress', function(ev) {
+            //mapbrush.on("brush", console.log("ASD"));
+            map.dragging.disable();
+            console.log('sssss'); // ev is an event object (MouseEvent in this case)
+        });
+        */
+        map.on('keydown', function(ev) {
+            map.dragging.disable();
+            //console.log('sssss'); // ev is an event object (MouseEvent in this case)
+        });
+        map.on('keyup', function(ev) {
+            map.dragging.enable();
+            //console.log('sssss'); // ev is an event object (MouseEvent in this case)
+        });
+
+        d3.csv("https://raw.githubusercontent.com/arith3/infovis/main/california_housing.csv")
+            .then(csvData => {
+                csvData.forEach(d => {
+                    d["ID"] = +d["ID"];
+                    d["MedInc"] = +d["MedInc"];
+                    d["HouseAge"] = +d["HouseAge"];
+                    d["AveRooms"] = +d["AveRooms"];
+                    d["AveBedrms"] = +d["AveBedrms"];
+                    d["Population"] = +d["Population"];
+                    d["AveOccup"] = +d["AveOccup"];
+                    d["Latitude"] = +d["Latitude"];
+                    d["Longitude"] = +d["Longitude"];
+                    d["MedHouseVal"] = +d["MedHouseVal"];
+                });
+
+                data = csvData;
+
+                scatterplot = new Scatterplot("#scatterplot", "#sc-tooltip", data);
+                scatterplot.initialize();
+                updateScatterplot();
+                // d3.selectAll("input[type=radio][name=x-encoding]").on("change", updateScatterplot);
+                let updateFunc = function() {
+                    updateHistogram();
+                    updateScatterplot();
+                    updateMap();
+                };
+                d3.selectAll("input[type=radio][name=x-encoding]").on("change", updateFunc);
+                d3.selectAll("input[type=radio][name=y-encoding]").on("change", updateScatterplot);
+                //d3.selectAll("#use-color").on("change", updateScatterplot);
+                //d3.selectAll("#use-color").on("change", d3.select("#interactiverow").style("display", "none"));
+                let chkFunc = function() {
+                    if (d3.select("#use-color").property("checked")) {
+                        d3.select("#interactiverow").style("visibility", "visible");
+                        d3.select("#histogram").style("display", "none");
+                        d3.select("#scatterplot").style("display", "inline-block");
+                    } else {
+                        d3.select("#interactiverow").style("visibility", "hidden");
+                        d3.select("#scatterplot").style("display", "none");
+                        d3.select("#histogram").style("display", "inline-block");
+
+                    }
+                }
+                d3.selectAll("#use-color").on("change", chkFunc);
+                d3.select("#scatterplot").style("display", "none");
+                d3.select("#histogram").style("display", "inline-block");
+                /*
+                scatterplot.on("start brush end", (brushedItems) => {
+                    brushedData = brushedItems;
+                    console.log(brushedData);
+                    updateHistogram();
+                    updateScatterplot();
+                    updateDataTable();
+                });
+                */
+                
+
+
+                mapbrush.on("start brush end", event => {
+                    brushedData = mapBrushed(event.selection);
+                    //d3.select("#map").selectAll("circle").classed("mapbrushed", d => brushedData)
+                    map.dragging.disable();
+                    map.dragging.enable();
+                    updateHistogram();
+                    updateDataTable();
+                    updateScatterplot();
+                });
+
+
+                histogram = new Histogram("#histogram");
+                histogram.initialize();
+                updateHistogram();
+                //d3.selectAll("input[type=radio][name=x-encoding]").on("change", updateHistogram);
+                //d3.selectAll("input[type=radio][name=x-encoding]").on("change", updateMap);
+                /*
+                pc = new PC("#pc", data, ["MedInc", "HouseAge", "AveRooms", "AveBedrms", "Population", "AveOccup", "Latitude", "Longitude", "MedHouseVal"]);
+                pc.initialize();
+
+                updatePC();
+                */
+
+                dataTable = new DataTable("#data-table", "#data-header");
+                //d3.select("#text-table").selectAll("th").on("click", function() {console.log("asdasd")});
+
+                updateDataTable();
+                updateMap();
+                /*
+                // map
+                let xsel = d3.select("input[type=radio][name=x-encoding]:checked").property("value");
+                //const priceExtent = d3.extent(data, d => d.MedHouseVal);
+                const priceExtent = d3.extent(data, (d) => {return d[xsel]});
+                const radiusScale = d3.scaleSqrt().domain(priceExtent).range([4, 20]);
+                const circleColor = d3.scaleSequential().domain(priceExtent).interpolator(d3.interpolateViridis);
+                console.log(priceExtent)
+                mapg.selectAll("circle")
+                    .data(data)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).x)
+                    .attr("cy", d => map.latLngToLayerPoint([+d.Latitude, +d.Longitude]).y)
+                    .attr("r", d => radiusScale(d.MedHouseVal))
+                    .attr("fill", d => circleColor(d.MedHouseVal))
+                    .attr("opacity", 0.7)
+                    .append("title")
+                    .text(d => `주택 가격: $${d.MedHouseVal}`); */
+            })
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
